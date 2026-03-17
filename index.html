@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>你的中国省份 — Which Chinese Province Are You?</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #C8392B;
+    --gold: #D4A843;
+    --ink: #1A1410;
+    --paper: #F5F0E8;
+    --paper2: #EDE8DC;
+    --muted: #8A7E72;
+    --light: #FAF7F2;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--light);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* NOISE TEXTURE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 1000; opacity: 0.6;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: flex; flex-direction: column; }
+
+  /* ── HERO SCREEN ── */
+  #screen-hero {
+    background: var(--ink);
+    color: var(--paper);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #screen-hero::after {
+    content: '中国';
+    position: absolute;
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(180px, 40vw, 340px);
+    color: rgba(255,255,255,0.03);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    pointer-events: none;
+    letter-spacing: -10px;
+  }
+
+  .hero-tag {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 28px;
+    font-weight: 500;
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(36px, 7vw, 72px);
+    line-height: 1.05;
+    margin-bottom: 16px;
+    color: var(--paper);
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-chinese {
+    font-size: clamp(18px, 4vw, 28px);
+    color: var(--muted);
+    margin-bottom: 16px;
+    letter-spacing: 0.15em;
+  }
+
+  .hero-sub {
+    font-size: 15px;
+    color: rgba(245,240,232,0.55);
+    max-width: 420px;
+    line-height: 1.7;
+    margin: 0 auto 48px;
+  }
+
+  .btn-start {
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 16px 48px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    z-index: 2;
+  }
+  .btn-start:hover { background: #b02f23; transform: translateY(-1px); }
+
+  .hero-divider {
+    width: 40px; height: 1px;
+    background: var(--gold);
+    margin: 0 auto 32px;
+  }
+
+  /* ── QUESTION SCREEN ── */
+  #screen-quiz {
+    background: var(--light);
+    padding: 0;
+  }
+
+  .quiz-header {
+    background: var(--ink);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .quiz-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    color: var(--paper);
+    letter-spacing: 0.05em;
+  }
+  .quiz-logo span { color: var(--gold); }
+
+  .progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .progress-label {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .progress-bar {
+    width: 120px; height: 2px;
+    background: rgba(255,255,255,0.1);
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%; background: var(--gold);
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  .quiz-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 24px;
+    max-width: 640px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .q-number {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--red);
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+
+  .q-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(22px, 4vw, 32px);
+    line-height: 1.3;
+    text-align: center;
+    margin-bottom: 10px;
+    color: var(--ink);
+  }
+
+  .q-sub {
+    font-size: 14px;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 44px;
+    line-height: 1.6;
+  }
+
+  .options {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .option {
+    background: white;
+    border: 1.5px solid var(--paper2);
+    padding: 18px 24px;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    text-align: left;
+  }
+
+  .option:hover {
+    border-color: var(--red);
+    background: #fff9f8;
+    transform: translateX(4px);
+  }
+
+  .option.selected {
+    border-color: var(--red);
+    background: #fff2f0;
+  }
+
+  .opt-letter {
+    width: 28px; height: 28px;
+    border: 1.5px solid var(--paper2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 500;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: all 0.18s;
+  }
+
+  .option:hover .opt-letter,
+  .option.selected .opt-letter {
+    background: var(--red);
+    border-color: var(--red);
+    color: white;
+  }
+
+  .opt-content {}
+  .opt-main { font-size: 15px; font-weight: 500; color: var(--ink); margin-bottom: 3px; }
+  .opt-detail { font-size: 13px; color: var(--muted); line-height: 1.4; }
+
+  /* ── LOADING SCREEN ── */
+  #screen-loading {
+    background: var(--ink);
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px;
+  }
+
+  .loading-chinese {
+    font-size: 64px;
+    margin-bottom: 32px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; transform: scale(0.96); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+
+  .loading-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--paper);
+    margin-bottom: 12px;
+  }
+
+  .loading-sub {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .loading-dots {
+    display: flex; gap: 8px; justify-content: center;
+    margin-top: 32px;
+  }
+
+  .loading-dots span {
+    width: 6px; height: 6px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: dot 1.4s ease-in-out infinite;
+  }
+  .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes dot {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ── RESULT SCREEN ── */
+  #screen-result {
+    background: var(--light);
+    min-height: 100vh;
+  }
+
+  .result-hero {
+    background: var(--ink);
+    padding: 60px 32px 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-province-bg {
+    position: absolute;
+    font-size: clamp(80px, 20vw, 160px);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.04;
+    letter-spacing: -4px;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .result-tag {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 20px;
+  }
+
+  .result-name-zh {
+    font-size: clamp(48px, 12vw, 96px);
+    color: var(--paper);
+    margin-bottom: 8px;
+    letter-spacing: 0.1em;
+    line-height: 1;
+  }
+
+  .result-name-en {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 5vw, 48px);
+    color: var(--gold);
+    margin-bottom: 8px;
+    font-style: italic;
+  }
+
+  .result-tagline {
+    font-size: 14px;
+    color: rgba(245,240,232,0.5);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 28px;
+  }
+
+  .result-match-pct {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.07);
+    padding: 10px 24px;
+    font-size: 13px;
+    color: var(--paper);
+    letter-spacing: 0.1em;
+  }
+
+  .result-match-pct strong { color: var(--gold); font-size: 20px; font-weight: 700; }
+
+  .result-body {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  .result-section {
+    margin-top: 48px;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--red);
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1; height: 1px;
+    background: var(--paper2);
+  }
+
+  .result-main-text {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(18px, 3vw, 24px);
+    line-height: 1.6;
+    color: var(--ink);
+    margin-bottom: 20px;
+  }
+
+  .result-body-text {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #4A4440;
+  }
+
+  .traits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .trait-card {
+    background: white;
+    border: 1px solid var(--paper2);
+    padding: 16px 18px;
+  }
+
+  .trait-zh { font-size: 22px; margin-bottom: 6px; }
+  .trait-en { font-size: 13px; font-weight: 500; color: var(--ink); margin-bottom: 4px; }
+  .trait-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  .quote-block {
+    border-left: 3px solid var(--gold);
+    padding: 20px 24px;
+    margin: 24px 0;
+    background: white;
+  }
+
+  .quote-text {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    font-style: italic;
+    line-height: 1.6;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .quote-source {
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .facts-list {
+    list-style: none;
+    display: grid;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .facts-list li {
+    display: flex;
+    gap: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #4A4440;
+    align-items: flex-start;
+  }
+
+  .facts-list li::before {
+    content: '—';
+    color: var(--gold);
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .result-cta {
+    margin-top: 56px;
+    padding: 40px;
+    background: var(--ink);
+    text-align: center;
+  }
+
+  .result-cta p {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.1em;
+  }
+
+  .result-cta h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    color: var(--paper);
+    margin-bottom: 24px;
+  }
+
+  .btn-retry {
+    background: transparent;
+    color: var(--gold);
+    border: 1.5px solid var(--gold);
+    padding: 12px 36px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 4px;
+  }
+  .btn-retry:hover { background: var(--gold); color: var(--ink); }
+
+  .btn-share {
+    background: var(--red);
+    color: white;
+    border: none;
+    padding: 12px 36px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin: 4px;
+  }
+  .btn-share:hover { background: #b02f23; }
+
+  /* ── TRAVEL SECTION ── */
+  .travel-intro {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #4A4440;
+    margin-bottom: 24px;
+  }
+
+  .places-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 540px) {
+    .places-grid { grid-template-columns: 1fr; }
+  }
+
+  .place-card {
+    background: white;
+    border: 1px solid var(--paper2);
+    padding: 0;
+    overflow: hidden;
+    transition: border-color 0.18s;
+  }
+
+  .place-card:hover { border-color: var(--gold); }
+
+  .place-card-top {
+    background: var(--ink);
+    padding: 16px 18px 14px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .place-name-zh {
+    font-size: 20px;
+    color: var(--paper);
+    line-height: 1;
+    letter-spacing: 0.05em;
+  }
+
+  .place-name-en {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-style: italic;
+    color: var(--gold);
+    margin-top: 4px;
+  }
+
+  .place-type-badge {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid rgba(212,168,67,0.4);
+    color: rgba(212,168,67,0.8);
+    white-space: nowrap;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .place-card-body {
+    padding: 14px 18px 16px;
+  }
+
+  .place-why {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--red);
+    margin-bottom: 6px;
+    font-style: italic;
+  }
+
+  .place-desc {
+    font-size: 13px;
+    color: #5A5450;
+    line-height: 1.55;
+    margin-bottom: 10px;
+  }
+
+  .place-detail {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-top: 1px solid var(--paper2);
+    padding-top: 8px;
+  }
+
+  .hidden-gem-card {
+    background: linear-gradient(135deg, #1A1410 0%, #2A1F18 100%);
+    border: 1px solid rgba(212,168,67,0.3);
+    padding: 20px 22px;
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+  }
+
+  .gem-icon {
+    font-size: 28px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .gem-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+
+  .gem-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px;
+    color: var(--paper);
+    margin-bottom: 8px;
+  }
+
+  .gem-desc {
+    font-size: 13px;
+    color: rgba(245,240,232,0.6);
+    line-height: 1.6;
+  }
+
+  .best-time-bar {
+    background: var(--paper);
+    border: 1px solid var(--paper2);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 4px;
+  }
+
+  .best-time-label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  .best-time-value {
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .best-time-note {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: auto;
+    text-align: right;
+  }
+
+  /* ── ERROR ── */
+  .error-box {
+    background: #fff2f0;
+    border: 1px solid var(--red);
+    padding: 20px 24px;
+    margin-top: 16px;
+    font-size: 14px;
+    color: var(--red);
+    line-height: 1.6;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+  }
+
+  /* ── ANIMATIONS ── */
+  .fade-in {
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-up {
+    animation: slideUp 0.4s ease forwards;
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* RESULT SECTIONS stagger */
+  .result-section:nth-child(1) { animation: fadeIn 0.5s 0.1s both; }
+  .result-section:nth-child(2) { animation: fadeIn 0.5s 0.25s both; }
+  .result-section:nth-child(3) { animation: fadeIn 0.5s 0.4s both; }
+  .result-section:nth-child(4) { animation: fadeIn 0.5s 0.55s both; }
+
+
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ HERO ═══════════════════════════════════ -->
+<div id="screen-hero" class="screen active">
+  <div style="position:relative;z-index:2;max-width:560px">
+    <div class="hero-tag">Cultural Personality Quiz · 文化性格测试</div>
+    <div class="hero-divider"></div>
+    <h1 class="hero-title">Which Chinese<br>Province <em>Are</em> You?</h1>
+    <div class="hero-chinese">你的中国省份是哪里？</div>
+    <p class="hero-sub">8 questions about who you are — your temperament, values, and how you move through the world. The result: a Chinese province that mirrors your soul, with a full cultural explanation.</p>
+    <button class="btn-start" onclick="startQuiz()">Begin · 开始</button>
+    <p style="font-size:12px;color:rgba(255,255,255,0.2);margin-top:20px;letter-spacing:0.05em">AI-powered · Sander in Europe</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ QUIZ ═══════════════════════════════════ -->
+<div id="screen-quiz" class="screen">
+  <div class="quiz-header">
+    <div class="quiz-logo">你的<span>省份</span></div>
+    <div class="progress-wrap">
+      <div class="progress-label" id="progress-label">1 / 8</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+  </div>
+  <div class="quiz-body">
+    <div id="q-number" class="q-number"></div>
+    <div id="q-text" class="q-text"></div>
+    <div id="q-sub" class="q-sub"></div>
+    <div id="options" class="options"></div>
+    <div id="quiz-error" class="error-box" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ LOADING ═══════════════════════════════════ -->
+<div id="screen-loading" class="screen">
+  <div class="loading-chinese" id="loading-char">🔮</div>
+  <div class="loading-text">Reading your personality...</div>
+  <div class="loading-sub" id="loading-sub">Consulting the provinces</div>
+  <div class="loading-dots">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ RESULT ═══════════════════════════════════ -->
+<div id="screen-result" class="screen">
+  <div class="result-hero">
+    <div class="result-province-bg" id="result-bg-char"></div>
+    <div class="result-tag">Your Chinese Province · 你的省份</div>
+    <div class="result-name-zh" id="result-zh"></div>
+    <div class="result-name-en" id="result-en"></div>
+    <div class="result-tagline" id="result-tagline"></div>
+    <div class="result-match-pct"><strong id="result-pct">92%</strong> personality match</div>
+  </div>
+  <div class="result-body">
+    <div id="result-content"></div>
+    <div class="result-cta">
+      <p>桑德在欧洲 · Sander in Europe</p>
+      <h3>Want your Chinese name too?</h3>
+      <button class="btn-retry" onclick="retryQuiz()">↺ Try Again</button>
+      <button class="btn-share" onclick="shareResult()">Share Your Province</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    id: "pace",
+    text: "How do you move through life?",
+    sub: "Not how you think you should — how you actually do.",
+    options: [
+      { letter: "A", main: "Steady and deliberate", detail: "I take my time. I finish what I start. I don't rush." },
+      { letter: "B", main: "Fast and hungry", detail: "I move quickly, I want results, I don't like standing still." },
+      { letter: "C", main: "Unhurried and observant", detail: "I wander. I notice things. The journey matters as much as the destination." },
+      { letter: "D", main: "Rhythmic and seasonal", detail: "I work in bursts. I rest deeply. I follow my own internal tide." }
+    ]
+  },
+  {
+    id: "conflict",
+    text: "When there's a conflict, your instinct is to...",
+    sub: "Your first, unreflective reaction.",
+    options: [
+      { letter: "A", main: "State your position clearly", detail: "Directness is respect. I say what I mean." },
+      { letter: "B", main: "Find the compromise", detail: "I look for the angle that works for everyone." },
+      { letter: "C", main: "Let it pass if it can", detail: "Most conflicts resolve themselves. I preserve the relationship." },
+      { letter: "D", main: "Understand before responding", detail: "I need to think. I'll come back with clarity." }
+    ]
+  },
+  {
+    id: "landscape",
+    text: "Which landscape feels most like home?",
+    sub: "Where your body relaxes when you arrive.",
+    options: [
+      { letter: "A", main: "Mountains and cold air", detail: "Stark, grand, demanding respect." },
+      { letter: "B", main: "Water — rivers, canals, sea", detail: "Fluid, connected, always moving." },
+      { letter: "C", main: "Open plains and big sky", detail: "Freedom, space, nothing blocking the horizon." },
+      { letter: "D", main: "Lush green hills and mist", detail: "Soft, layered, beautiful in every season." }
+    ]
+  },
+  {
+    id: "food",
+    text: "Your relationship with food is...",
+    sub: "Be honest — it reveals more than you think.",
+    options: [
+      { letter: "A", main: "Food is love and ceremony", detail: "A proper meal takes time. It means something." },
+      { letter: "B", main: "Bold flavours, no apologies", detail: "Spicy, intense, memorable. I eat with full commitment." },
+      { letter: "C", main: "Simple and honest ingredients", detail: "Good food doesn't need to be complicated." },
+      { letter: "D", main: "Adventurous and curious", detail: "I'll try anything. Novelty is exciting." }
+    ]
+  },
+  {
+    id: "value",
+    text: "What do you protect most fiercely?",
+    sub: "The thing you won't compromise on.",
+    options: [
+      { letter: "A", main: "My independence", detail: "I decide my own path. I answer to myself." },
+      { letter: "B", main: "My people", detail: "Family, community — I will sacrifice a great deal for them." },
+      { letter: "C", main: "My principles", detail: "There are things I believe that I will not abandon." },
+      { letter: "D", main: "My peace", detail: "Harmony isn't weakness. It's the highest form of strength." }
+    ]
+  },
+  {
+    id: "work",
+    text: "How do you do your best work?",
+    sub: "When you're in flow — what does that look like?",
+    options: [
+      { letter: "A", main: "Alone, deep in concentration", detail: "I think better without noise. Give me space." },
+      { letter: "B", main: "In a team, energised by others", detail: "Other people make me sharper. I need the friction." },
+      { letter: "C", main: "With a clear goal and deadline", detail: "Pressure focuses me. I don't drift when stakes are real." },
+      { letter: "D", main: "Without a fixed plan", detail: "My best ideas come when I'm allowed to wander." }
+    ]
+  },
+  {
+    id: "history",
+    text: "Your relationship with tradition is...",
+    sub: "What does the past mean to you?",
+    options: [
+      { letter: "A", main: "It's the foundation I build on", detail: "Understanding where I come from gives me direction." },
+      { letter: "B", main: "I respect it but I move forward", detail: "History teaches. It doesn't command." },
+      { letter: "C", main: "It's something to be proud of", detail: "I carry it with me. It's part of my identity." },
+      { letter: "D", main: "I question it constantly", detail: "Every tradition should earn its place." }
+    ]
+  },
+  {
+    id: "wish",
+    text: "If you could give one thing to the world, it would be...",
+    sub: "Your deepest wish — the one you rarely say out loud.",
+    options: [
+      { letter: "A", main: "Genuine understanding between people", detail: "Not tolerance — real understanding. Across every divide." },
+      { letter: "B", main: "The courage to pursue what matters", detail: "Most people know what they want. They lack the nerve." },
+      { letter: "C", main: "Quiet and sustainable beauty", detail: "A world where slowness and craft are valued again." },
+      { letter: "D", main: "Space for every kind of person to belong", detail: "No one should have to become someone else to fit in." }
+    ]
+  }
+];
+
+let currentQ = 0;
+let answers = {};
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function startQuiz() {
+  currentQ = 0;
+  answers = {};
+  showScreen('quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = questions[currentQ];
+  const pct = Math.round((currentQ / questions.length) * 100);
+
+  document.getElementById('progress-label').textContent = (currentQ + 1) + ' / ' + questions.length;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('q-number').textContent = 'Question ' + (currentQ + 1);
+  document.getElementById('quiz-error').style.display = 'none';
+
+  const qText = document.getElementById('q-text');
+  const qSub = document.getElementById('q-sub');
+  qText.classList.remove('fade-in');
+  void qText.offsetWidth;
+  qText.textContent = q.text;
+  qText.classList.add('fade-in');
+  qSub.textContent = q.sub;
+
+  const opts = document.getElementById('options');
+  opts.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const div = document.createElement('div');
+    div.className = 'option slide-up';
+    div.style.animationDelay = (i * 0.08) + 's';
+    div.innerHTML = `
+      <div class="opt-letter">${opt.letter}</div>
+      <div class="opt-content">
+        <div class="opt-main">${opt.main}</div>
+        <div class="opt-detail">${opt.detail}</div>
+      </div>`;
+    div.onclick = () => selectOption(q.id, opt.letter, opt.main, div);
+    opts.appendChild(div);
+  });
+}
+
+function selectOption(qId, letter, main, el) {
+  document.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  answers[qId] = { letter, main };
+
+  setTimeout(() => {
+    currentQ++;
+    if (currentQ < questions.length) {
+      renderQuestion();
+    } else {
+      submitAnswers();
+    }
+  }, 300);
+}
+
+const loadingMessages = [
+  ["🔮", "Reading your personality..."],
+  ["🏔️", "Consulting the mountains..."],
+  ["🌊", "Listening to the rivers..."],
+  ["📜", "Searching 5,000 years of character..."],
+  ["🗺️", "Finding your province..."],
+];
+
+async function submitAnswers() {
+  showScreen('loading');
+
+  let msgIdx = 0;
+  const msgInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % loadingMessages.length;
+    document.getElementById('loading-char').textContent = loadingMessages[msgIdx][0];
+    document.getElementById('loading-sub').textContent = loadingMessages[msgIdx][1];
+  }, 1800);
+
+  const answerSummary = Object.entries(answers).map(([qId, ans]) => {
+    const q = questions.find(q => q.id === qId);
+    return `${q.text} \u2192 "${ans.main}"`;
+  }).join('\n');
+
+  const prompt = `You are a deep expert in Chinese regional culture, history, travel, and character. You are warm, wise, and always specific — never generic.
+
+A person has answered 8 personality questions. Based on their answers, match them to the single most fitting Chinese province or autonomous region. Choose from across ALL of China — including less-visited ones. Consider: Yunnan, Sichuan, Shanxi, Shaanxi, Fujian, Hunan, Gansu, Inner Mongolia, Zhejiang, Guizhou, Xinjiang, Liaoning, Guangdong, Anhui, Jiangxi, Qinghai, Ningxia, Hebei, Shandong, Hubei, Jilin, Heilongjiang, Hainan, Guangxi, Chongqing, and others.
+
+Their answers:
+${answerSummary}
+
+For the travel section: recommend 3 specific places to visit in this province — one major city/sight, one natural landscape or historical site, and one lesser-known hidden gem that most foreign tourists never find. Each recommendation must be directly connected to this specific person's personality as revealed in their answers. The hidden gem should be genuinely obscure.
+
+Respond ONLY with a valid JSON object. No markdown, no backticks, no explanation outside the JSON.
+
+{
+  "province_zh": "省份中文名 (characters only)",
+  "province_en": "Province Name in English",
+  "tagline": "A short evocative phrase (max 6 words)",
+  "match_pct": 88,
+  "opening": "One powerful sentence to this person about why they belong here. Use 'You'.",
+  "explanation": "3-4 sentences connecting personality to province. Reference actual answers.",
+  "traits": [
+    { "zh": "汉字", "en": "English word", "desc": "One sentence linking trait to person and province." },
+    { "zh": "汉字", "en": "English word", "desc": "One sentence linking trait to person and province." },
+    { "zh": "汉字", "en": "English word", "desc": "One sentence linking trait to person and province." },
+    { "zh": "汉字", "en": "English word", "desc": "One sentence linking trait to person and province." }
+  ],
+  "quote": { "text": "Classical saying from this province's culture.", "source": "Attribution" },
+  "facts": [
+    "Surprising fact connecting to this person's personality.",
+    "Historical/cultural fact that makes them proud of this match.",
+    "Something most people don't know about this province."
+  ],
+  "travel_intro": "2 sentences on why THIS person would have a profound experience here.",
+  "places": [
+    { "name_zh": "中文名", "name_en": "English", "type": "City", "why_you": "Personal reason.", "description": "2 vivid sentences.", "practical": "Insider tip." },
+    { "name_zh": "中文名", "name_en": "English", "type": "Landscape", "why_you": "Personal reason.", "description": "2 vivid sentences.", "practical": "Season or tip." },
+    { "name_zh": "中文名", "name_en": "English", "type": "Hidden gem", "why_you": "Personal reason.", "description": "2 vivid sentences.", "practical": "How to get there." }
+  ],
+  "best_time": "e.g. April-May and September-October",
+  "best_time_note": "One short reason why"
+}`;
+
+  try {
+    const response = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ max_tokens: 1800, messages: [{ role: 'user', content: prompt }] })
+    });
+
+    clearInterval(msgInterval);
+
+    if (!response.ok) throw new Error('API error ' + response.status);
+
+    const data = await response.json();
+    const raw = data.content.map(b => b.text || '').join('');
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const result = JSON.parse(clean);
+
+    renderResult(result);
+  } catch (err) {
+    clearInterval(msgInterval);
+    showScreen('quiz');
+    document.getElementById('quiz-error').style.display = 'block';
+    document.getElementById('quiz-error').textContent = 'Something went wrong. Please try again. (' + err.message + ')';
+    currentQ = questions.length - 1;
+    renderQuestion();
+  }
+}
+
+function renderResult(r) {
+  document.getElementById('result-bg-char').textContent = r.province_zh;
+  document.getElementById('result-zh').textContent = r.province_zh;
+  document.getElementById('result-en').textContent = r.province_en;
+  document.getElementById('result-tagline').textContent = r.tagline;
+  document.getElementById('result-pct').textContent = r.match_pct + '%';
+
+  const typeIcons = { 'City': '🏙', 'Landscape': '🏔', 'Hidden gem': '💎' };
+
+  const placesHtml = (r.places || []).map((p, i) => {
+    const isGem = p.type === 'Hidden gem';
+    if (isGem) {
+      return `<div class="hidden-gem-card">
+        <div class="gem-icon">💎</div>
+        <div>
+          <div class="gem-label">Hidden gem · 隐藏宝藏</div>
+          <div class="gem-name">${p.name_en} · ${p.name_zh}</div>
+          <div class="gem-desc" style="margin-bottom:8px;font-style:italic;color:rgba(212,168,67,0.85)">${p.why_you}</div>
+          <div class="gem-desc">${p.description}</div>
+          <div class="gem-desc" style="margin-top:8px;opacity:0.5;font-size:11px;letter-spacing:0.06em;text-transform:uppercase">${p.practical}</div>
+        </div>
+      </div>`;
+    }
+    return `<div class="place-card">
+      <div class="place-card-top">
+        <div>
+          <div class="place-name-zh">${p.name_zh}</div>
+          <div class="place-name-en">${p.name_en}</div>
+        </div>
+        <div class="place-type-badge">${p.type}</div>
+      </div>
+      <div class="place-card-body">
+        <div class="place-why">${p.why_you}</div>
+        <div class="place-desc">${p.description}</div>
+        <div class="place-detail">${p.practical}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const content = document.getElementById('result-content');
+  content.innerHTML = `
+    <div class="result-section">
+      <div class="section-label">Why You</div>
+      <div class="result-main-text">${r.opening}</div>
+      <div class="result-body-text">${r.explanation}</div>
+    </div>
+
+    <div class="result-section">
+      <div class="section-label">Your Shared Character</div>
+      <div class="traits-grid">
+        ${r.traits.map(t => `
+          <div class="trait-card">
+            <div class="trait-zh">${t.zh}</div>
+            <div class="trait-en">${t.en}</div>
+            <div class="trait-desc">${t.desc}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <div class="result-section">
+      <div class="section-label">From the Province</div>
+      <div class="quote-block">
+        <div class="quote-text">${r.quote.text}</div>
+        <div class="quote-source">${r.quote.source}</div>
+      </div>
+    </div>
+
+    <div class="result-section">
+      <div class="section-label">What You Should Know</div>
+      <ul class="facts-list">
+        ${r.facts.map(f => `<li>${f}</li>`).join('')}
+      </ul>
+    </div>
+
+    <div class="result-section">
+      <div class="section-label">Where You Should Go</div>
+      <p class="travel-intro">${r.travel_intro || ''}</p>
+      <div class="places-grid">
+        ${placesHtml}
+      </div>
+      ${r.best_time ? `<div class="best-time-bar">
+        <div class="best-time-label">Best time to visit</div>
+        <div class="best-time-value">${r.best_time}</div>
+        <div class="best-time-note">${r.best_time_note || ''}</div>
+      </div>` : ''}
+    </div>
+  `;
+
+  showScreen('result');
+}
+
+function retryQuiz() {
+  startQuiz();
+}
+
+function shareResult() {
+  const zh = document.getElementById('result-zh').textContent;
+  const en = document.getElementById('result-en').textContent;
+  const pct = document.getElementById('result-pct').textContent;
+  const text = `I took the Chinese Province Personality Quiz and I'm ${en} (${zh}) — ${pct} match! 🇨🇳\n\nFind yours at @BushiKesangde`;
+  if (navigator.share) {
+    navigator.share({ title: '你的省份 — My Chinese Province', text });
+  } else {
+    navigator.clipboard.writeText(text).then(() => alert('Copied to clipboard! Share it anywhere.'));
+  }
+}
+
+function startQuiz() {
+  currentQ = 0;
+  answers = {};
+  showScreen('quiz');
+  renderQuestion();
+}
+
+</script>
+
+</body>
+</html>
